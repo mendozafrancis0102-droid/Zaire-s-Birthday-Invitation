@@ -439,7 +439,7 @@ END:VCALENDAR`;
             {/* Photo Container - Locked and Display Only */}
             <div className="relative w-full h-full rounded-full overflow-hidden border-8 border-white shadow-2xl bg-gradient-to-b from-yellow-200 to-sky-200 flex items-center justify-center pointer-events-none">
               <img 
-                src="/1211e183-0b4f-4164-b459-96c206205c6d.jpg" 
+                src="./1211e183-0b4f-4164-b459-96c206205c6d.jpg" 
                 alt="Birthday Boy Zaire" 
                 className="w-full h-full object-cover select-none pointer-events-none"
                 style={{

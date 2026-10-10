@@ -439,7 +439,7 @@ END:VCALENDAR`;
             {/* Photo Container - Locked and Display Only */}
             <div className="relative w-full h-full rounded-full overflow-hidden border-8 border-white shadow-2xl bg-gradient-to-b from-yellow-200 to-sky-200 flex items-center justify-center pointer-events-none">
               <img 
-                src={photoSrc} 
+                src="/1211e183-0b4f-4164-b459-96c206205c6d.jpg" 
                 alt="Birthday Boy Zaire" 
                 className="w-full h-full object-cover select-none pointer-events-none"
                 style={{
@@ -447,13 +447,13 @@ END:VCALENDAR`;
                   transformOrigin: 'center 35%'
                 }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/zaire_nobg.jpg";
+                  (e.target as HTMLImageElement).src = "/1211e183-0b4f-4164-b459-96c206205c6d.jpg";
                 }}
               />
             </div>
 
             {/* Festive Party Hat Emoji */}
-            <div className="absolute -top-7 -right-1 sm:-top-8 sm:-right-2 text-6xl sm:text-7xl transform rotate-12 drop-shadow-xl pointer-events-none">
+            <div className="absolute -top-7 -right-1 sm:-top-8 sm:-right-2 text-6xl sm:text-7xl transform roDtate-12 drop-shadow-xl pointer-events-none">
               🥳
             </div>
 

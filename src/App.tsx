@@ -443,7 +443,7 @@ END:VCALENDAR`;
                 alt="Birthday Boy Zaire" 
                 className="w-full h-full object-cover select-none pointer-events-none"
                 style={{
-                  transform: 'scale(2.20) translateY(-1%)',
+                  transform: 'scale(1.00)',
                   transformOrigin: 'center 35%'
                 }}
                 onError={(e) => {

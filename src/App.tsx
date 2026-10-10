@@ -12,19 +12,18 @@ import {
   Shirt, 
   DollarSign, 
   BookOpen, 
-  Send,
-  PartyPopper,
-  Volume2,
-  VolumeX,
-  Navigation,
-  Check,
-  Smile,
-  Users,
-  MessageCircle,
-  ExternalLink,
-  Share2,
-  Camera,
-  CalendarPlus
+  Send, 
+  PartyPopper, 
+  Volume2, 
+  VolumeX, 
+  Navigation, 
+  Check, 
+  Smile, 
+  Users, 
+  MessageCircle, 
+  ExternalLink, 
+  Share2, 
+  CalendarPlus 
 } from 'lucide-react';
 
 interface WishItem {
@@ -44,23 +43,48 @@ export default function App() {
   const [message, setMessage] = useState('');
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
-  const [customPhoto, setCustomPhoto] = useState<string | null>(null);
+  const [photoSrc, setPhotoSrc] = useState<string>('/zaire_nobg.jpg');
   const [copiedLink, setCopiedLink] = useState(false);
   const [wishes, setWishes] = useState<WishItem[]>([]);
   const [isLoadingWishes, setIsLoadingWishes] = useState(true);
   
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const musicStopTimerRef = useRef<number | null>(null);
 
-  // Fetch real wishes from backend API, with clean localStorage sync (no demo messages)
+  // Load locked photo & live wishes
   useEffect(() => {
-    // 1. Clean out old dummy test messages from user's browser localStorage if present
+    // 1. Check if user already loaded their son's photo in localStorage
+    try {
+      const savedPhoto = localStorage.getItem('zaire_birthday_custom_photo');
+      if (savedPhoto && savedPhoto.startsWith('data:image')) {
+        setPhotoSrc(savedPhoto);
+        // Automatically sync to server so all visitors across all devices see baby Zaire's photo
+        fetch('/api/photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photo: savedPhoto })
+        }).catch((err) => console.warn('Photo sync error:', err));
+      } else {
+        // Fetch from server if not in this browser's localStorage
+        fetch('/api/photo')
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && data.photo) {
+              setPhotoSrc(data.photo);
+              localStorage.setItem('zaire_birthday_custom_photo', data.photo);
+            }
+          })
+          .catch((err) => console.warn('Could not fetch server photo:', err));
+      }
+    } catch (e) {
+      console.warn('Photo initialization error:', e);
+    }
+
+    // 2. Clean out old dummy test messages from user's browser localStorage if present
     try {
       const stored = localStorage.getItem('zaire_birthday_wishes');
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Filter out dummy demo entries (id '1' or '2')
         const filtered = Array.isArray(parsed) 
           ? parsed.filter((w: WishItem) => w.id !== '1' && w.id !== '2')
           : [];
@@ -71,7 +95,7 @@ export default function App() {
       console.warn(e);
     }
 
-    // 2. Fetch real live wishes from server endpoint
+    // 3. Fetch real live wishes from server endpoint
     fetch('/api/wishes')
       .then((res) => {
         if (!res.ok) throw new Error('API request failed');
@@ -79,7 +103,6 @@ export default function App() {
       })
       .then((data: WishItem[]) => {
         if (Array.isArray(data)) {
-          // Filter out any demo data
           const realWishes = data.filter((w) => w.id !== '1' && w.id !== '2');
           setWishes(realWishes);
           localStorage.setItem('zaire_birthday_wishes', JSON.stringify(realWishes));
@@ -91,14 +114,6 @@ export default function App() {
       .finally(() => {
         setIsLoadingWishes(false);
       });
-
-    // Load custom uploaded photo if saved in local storage
-    try {
-      const savedPhoto = localStorage.getItem('zaire_birthday_custom_photo');
-      if (savedPhoto) setCustomPhoto(savedPhoto);
-    } catch (e) {
-      console.warn(e);
-    }
   }, []);
 
   // Countdown timer to October 31, 2026, 3:00 PM (15:00)
@@ -236,7 +251,6 @@ export default function App() {
       message: message.trim() || (attendance === 'yes' ? "Can't wait to celebrate with Zaire! 🎉" : "Best wishes to baby Zaire! ❤️")
     };
 
-    // Optimistic client-side addition
     const localNewWish: WishItem = {
       id: Date.now().toString(),
       name: payload.name,
@@ -257,7 +271,6 @@ export default function App() {
     setRsvpSubmitted(true);
     fireConfetti();
 
-    // Persist to backend server so all visitors see the new wish
     try {
       const response = await fetch('/api/wishes', {
         method: 'POST',
@@ -266,28 +279,10 @@ export default function App() {
       });
       if (response.ok) {
         const savedServerWish: WishItem = await response.json();
-        // Replace optimistic entry with server response
         setWishes((prev) => [savedServerWish, ...prev.filter((w) => w.id !== localNewWish.id)]);
       }
     } catch (err) {
       console.warn('Saved locally, server sync failed:', err);
-    }
-  };
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setCustomPhoto(result);
-        try {
-          localStorage.setItem('zaire_birthday_custom_photo', result);
-        } catch (err) {
-          console.warn(err);
-        }
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -430,24 +425,21 @@ END:VCALENDAR`;
         </h2>
 
         {/* ============================================================ */}
-        {/* HERO SECTION: PHOTO OF BABY ZAIRE LOCKED CLOSE-UP & CENTERED */}
+        {/* HERO SECTION: LOCKED PERMANENT PHOTO OF BABY ZAIRE */}
+        {/* Protected, read-only spotlight frame with nobody able to edit */}
         {/* ============================================================ */}
         <div className="flex flex-col items-center justify-center mb-8">
           
-          {/* Circular Frame - Exact close-up framing (2.20x scale, -1% vertical) */}
-          <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-92 md:h-92 mx-auto group">
+          {/* Circular Frame - Protected & Non-Editable */}
+          <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-92 md:h-92 mx-auto select-none pointer-events-none">
             
             {/* Rainbow Glowing Outer Ring */}
             <div className="absolute -inset-4 sm:-inset-5 bg-gradient-to-r from-red-500 via-yellow-400 via-emerald-400 via-sky-400 to-pink-500 rounded-full animate-spin-slow opacity-95 blur-xs shadow-2xl"></div>
             
-            {/* Photo Container */}
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="relative w-full h-full rounded-full overflow-hidden border-8 border-white shadow-2xl bg-gradient-to-b from-yellow-200 to-sky-200 flex items-center justify-center cursor-pointer"
-              title="Click to change photo if needed"
-            >
+            {/* Photo Container - Locked and Display Only */}
+            <div className="relative w-full h-full rounded-full overflow-hidden border-8 border-white shadow-2xl bg-gradient-to-b from-yellow-200 to-sky-200 flex items-center justify-center pointer-events-none">
               <img 
-                src={customPhoto || "/zaire_nobg.jpg"} 
+                src={photoSrc} 
                 alt="Birthday Boy Zaire" 
                 className="w-full h-full object-cover select-none pointer-events-none"
                 style={{
@@ -455,35 +447,18 @@ END:VCALENDAR`;
                   transformOrigin: 'center 35%'
                 }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/src/assets/images/zaire_birthday_boy_1791635403815.jpg";
+                  (e.target as HTMLImageElement).src = "/zaire_nobg.jpg";
                 }}
               />
-
-              {/* Gentle Camera Button Indicator on Hover */}
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-3">
-                <span className="bg-white text-slate-800 px-3.5 py-1.5 rounded-full font-black text-xs shadow-lg flex items-center space-x-1.5">
-                  <Camera className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Tap to Change Photo</span>
-                </span>
-              </div>
             </div>
 
-            {/* Hidden file input for photo upload */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handlePhotoUpload} 
-              accept="image/*" 
-              className="hidden" 
-            />
-
             {/* Festive Party Hat Emoji */}
-            <div className="absolute -top-7 -right-1 sm:-top-8 sm:-right-2 text-6xl sm:text-7xl transform rotate-12 drop-shadow-xl">
+            <div className="absolute -top-7 -right-1 sm:-top-8 sm:-right-2 text-6xl sm:text-7xl transform rotate-12 drop-shadow-xl pointer-events-none">
               🥳
             </div>
 
             {/* CoComelon Watermelon TV Badge */}
-            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white rounded-full px-5 py-2 shadow-2xl border-4 border-emerald-400 flex items-center space-x-2 whitespace-nowrap">
+            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white rounded-full px-5 py-2 shadow-2xl border-4 border-emerald-400 flex items-center space-x-2 whitespace-nowrap pointer-events-none">
               <span className="text-2xl">🍉</span>
               <span className="font-black text-xs sm:text-sm text-emerald-800 uppercase tracking-wide">
                 Baby Zaire • Turning 1

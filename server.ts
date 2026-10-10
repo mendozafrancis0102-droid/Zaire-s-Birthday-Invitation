@@ -10,11 +10,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-app.use(express.json());
+// Allow photo base64 payload up to 20MB
+app.use(express.json({ limit: '20mb' }));
 
 // Persistent wishes JSON store
 const DATA_DIR = path.resolve(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'wishes.json');
+const PHOTO_FILE = path.join(DATA_DIR, 'zaire_photo.txt');
 
 // Ensure data folder and file exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -68,6 +70,44 @@ app.post('/api/wishes', (req, res) => {
   } catch (err) {
     console.error('Error saving wish:', err);
     res.status(500).json({ error: 'Failed to save wish' });
+  }
+});
+
+// GET locked photo of baby Zaire
+app.get('/api/photo', (_req, res) => {
+  try {
+    if (fs.existsSync(PHOTO_FILE)) {
+      const data = fs.readFileSync(PHOTO_FILE, 'utf-8');
+      return res.json({ photo: data });
+    }
+  } catch (err) {
+    console.error('Error reading photo:', err);
+  }
+  res.json({ photo: null });
+});
+
+// POST to permanently store son's photo on the server
+app.post('/api/photo', (req, res) => {
+  try {
+    const { photo } = req.body;
+    if (photo && typeof photo === 'string' && photo.startsWith('data:image')) {
+      fs.writeFileSync(PHOTO_FILE, photo);
+
+      // Extract binary buffer to save to public files as well
+      const matches = photo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const buffer = Buffer.from(matches[2], 'base64');
+        const pubSonPath = path.resolve(__dirname, 'public', 'zaire_son.jpg');
+        const pubNobgPath = path.resolve(__dirname, 'public', 'zaire_nobg.jpg');
+        fs.writeFileSync(pubSonPath, buffer);
+        fs.writeFileSync(pubNobgPath, buffer);
+      }
+      return res.json({ success: true });
+    }
+    res.status(400).json({ error: 'Invalid photo data' });
+  } catch (err) {
+    console.error('Error writing photo:', err);
+    res.status(500).json({ error: 'Failed to save photo' });
   }
 });
 

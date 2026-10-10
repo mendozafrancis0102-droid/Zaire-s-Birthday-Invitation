@@ -2,5 +2,7 @@
   "name": "Zaire's 1st Birthday Invitation - CoComelon Celebration",
   "description": "Interactive 1st birthday invitation for Zaire with CoComelon theme, countdown, RSVP, music, gift guide, and location details at McDonald's Arcovia City.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

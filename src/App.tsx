@@ -198,19 +198,21 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Continuous background melody playback loop
+  // Continuous background melody playback loop (only invoked after user gesture)
   const playMelodyCycle = () => {
     if (!isPlayingRef.current) return;
 
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         audioCtxRef.current = new AudioCtx();
       }
 
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        ctx.resume().catch((err) => {
+          console.log('Autoplay prevented by browser:', err);
+        });
       }
 
       // Happy Birthday xylophone / chime notes sequence
@@ -257,15 +259,28 @@ export default function App() {
       }, (totalDuration + 1.2) * 1000);
 
     } catch (e) {
-      console.warn('Audio play cycle error:', e);
+      console.log('Autoplay prevented by browser:', e);
     }
   };
 
-  const startMusic = () => {
+  const startMusic = async () => {
     if (isPlayingRef.current) return;
-    isPlayingRef.current = true;
-    setIsPlayingMusic(true);
-    playMelodyCycle();
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        await audioCtxRef.current.resume().catch((err) => {
+          console.log('Autoplay prevented by browser:', err);
+        });
+      }
+      isPlayingRef.current = true;
+      setIsPlayingMusic(true);
+      playMelodyCycle();
+    } catch (err) {
+      console.log('Autoplay prevented by browser:', err);
+    }
   };
 
   const stopMusic = () => {
@@ -288,33 +303,15 @@ export default function App() {
     }
   };
 
-  // Autoplay music as soon as user visits or interacts with the website
+  // Audio cleanup on unmount - no automatic audio execution on mount
   useEffect(() => {
-    // Attempt automatic start
-    startMusic();
-
-    // Browser autoplay policy unlocks upon first user gesture (touch, scroll, click)
-    const handleFirstInteraction = () => {
-      if (!isPlayingRef.current) {
-        startMusic();
-      } else if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
-      }
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
-      window.removeEventListener('scroll', handleFirstInteraction);
-    };
-
-    window.addEventListener('click', handleFirstInteraction, { passive: true });
-    window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
-    window.addEventListener('scroll', handleFirstInteraction, { passive: true });
-
     return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
-      window.removeEventListener('scroll', handleFirstInteraction);
+      isPlayingRef.current = false;
       if (loopTimeoutRef.current) {
         window.clearTimeout(loopTimeoutRef.current);
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
       }
     };
   }, []);

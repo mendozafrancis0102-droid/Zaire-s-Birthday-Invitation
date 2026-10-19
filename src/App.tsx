@@ -155,7 +155,6 @@ export default function App() {
   const [message, setMessage] = useState('');
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
-  const [photoSrc, setPhotoSrc] = useState<string>('/zaire_above_chest.jpg');
   const [copiedLink, setCopiedLink] = useState(false);
   const [wishes, setWishes] = useState<WishItem[]>([]);
   const [isLoadingWishes, setIsLoadingWishes] = useState(false);
@@ -316,31 +315,6 @@ export default function App() {
       setNowTick((t) => t + 1);
     }, 1000);
     return () => clearInterval(ticker);
-  }, []);
-
-  // Load custom photo
-  useEffect(() => {
-    try {
-      const savedPhoto = localStorage.getItem('zaire_birthday_custom_photo');
-      if (savedPhoto && savedPhoto.startsWith('data:image')) {
-        setPhotoSrc(savedPhoto);
-      } else {
-        fetch('/api/photo')
-          .then((res) => res.json())
-          .then((data) => {
-            if (data && data.photo) {
-              setPhotoSrc(data.photo);
-            } else {
-              setPhotoSrc('/zaire_above_chest.jpg');
-            }
-          })
-          .catch(() => {
-            setPhotoSrc('/zaire_above_chest.jpg');
-          });
-      }
-    } catch (e) {
-      console.warn(e);
-    }
   }, []);
 
   // Real-time live wishes synchronization (polls every 3 seconds)
@@ -656,26 +630,25 @@ END:VCALENDAR`;
           
           <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-92 md:h-92 mx-auto select-none pointer-events-none">
             
-            {/* Rainbow Glowing Outer Ring */}
-            <div className="absolute -inset-4 sm:-inset-5 bg-gradient-to-r from-red-500 via-yellow-400 via-emerald-400 via-sky-400 to-pink-500 rounded-full animate-spin-slow opacity-95 blur-xs shadow-2xl"></div>
+            {/* Circular Orange-to-Red Gradient Ring */}
+            <div className="absolute -inset-4 sm:-inset-5 bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 rounded-full animate-spin-slow opacity-95 blur-xs shadow-2xl"></div>
             
             {/* Photo Container - Kept strictly above the chest only */}
             <div className="relative w-full h-full rounded-full overflow-hidden border-8 border-white shadow-2xl bg-gradient-to-b from-yellow-200 to-sky-200 flex items-center justify-center pointer-events-none">
               <img 
-                src={photoSrc} 
+                src="/zaire-new.png" 
                 alt="Birthday Boy Zaire" 
-                className="w-full h-full object-cover select-none pointer-events-none"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/zaire_above_chest.jpg";
-                }}
+                className="w-full h-full object-cover object-[center_20%] scale-110 rounded-full"
+                
               />
+              
             </div>
 
             {/* CoComelon Watermelon TV Badge */}
             <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white rounded-full px-5 py-2 shadow-2xl border-4 border-emerald-400 flex items-center space-x-2 whitespace-nowrap pointer-events-none">
               <span className="text-2xl">🍉</span>
               <span className="font-black text-xs sm:text-sm text-emerald-800 uppercase tracking-wide">
-                Baby Zaire • Turning 1
+                BABY ZAIRE • TURNING 1
               </span>
             </div>
           </div>

@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { 
+  db, 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  onSnapshot, 
+  serverTimestamp 
+} from './firebase';
+import { 
   Heart, 
   MapPin, 
   Clock, 
@@ -156,7 +165,8 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [wishes, setWishes] = useState<WishItem[]>([]);
+  const [messages, setMessages] = useState<WishItem[]>([]);
+  const wishes = messages;
   const [isLoadingWishes, setIsLoadingWishes] = useState(false);
   const [, setNowTick] = useState(0);
   
@@ -317,46 +327,44 @@ export default function App() {
     return () => clearInterval(ticker);
   }, []);
 
-  // Real-time live wishes synchronization (polls every 3 seconds)
+  // Real-time live wishes synchronization from Firebase Firestore
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('zaire_birthday_wishes');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          // Exclude any obsolete sample/mock wishes
-          const realOnly = parsed.filter((w: WishItem) => !w.id?.startsWith('wish_sample_'));
-          setWishes(realOnly);
-          localStorage.setItem('zaire_birthday_wishes', JSON.stringify(realOnly));
-        }
-      }
-    } catch (e) {
-      console.warn(e);
-    }
-
-    const fetchWishes = () => {
-      fetch('/api/wishes')
-        .then((res) => res.json())
-        .then((data: WishItem[]) => {
-          if (Array.isArray(data)) {
-            const realOnly = data.filter((w: WishItem) => !w.id?.startsWith('wish_sample_'));
-            setWishes(realOnly);
-            try {
-              localStorage.setItem('zaire_birthday_wishes', JSON.stringify(realOnly));
-            } catch (e) {
-              console.warn(e);
-            }
+    setIsLoadingWishes(true);
+    const q = query(collection(db, 'wishes'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: WishItem[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          let createdMillis: number | undefined;
+          if (data.createdAt && typeof data.createdAt.toMillis === 'function') {
+            createdMillis = data.createdAt.toMillis();
+          } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdMillis = data.createdAt.toDate().getTime();
+          } else if (typeof data.createdAt === 'number') {
+            createdMillis = data.createdAt;
           }
-        })
-        .catch(() => {})
-        .finally(() => {
-          setIsLoadingWishes(false);
+          return {
+            id: docSnap.id,
+            name: data.name || 'Guest',
+            attendance: data.attendance === 'no' ? 'no' : 'yes',
+            guests: typeof data.guests === 'number' ? data.guests : Number(data.guests) || 0,
+            message: data.message || '',
+            createdAt: createdMillis,
+            timestamp: createdMillis ? new Date(createdMillis).toISOString() : undefined,
+            time: 'Just now'
+          };
         });
-    };
+        setMessages(list);
+        setIsLoadingWishes(false);
+      },
+      (error) => {
+        console.error('Firestore onSnapshot error:', error);
+        setIsLoadingWishes(false);
+      }
+    );
 
-    fetchWishes();
-    const interval = setInterval(fetchWishes, 3000);
-    return () => clearInterval(interval);
+    return () => unsubscribe();
   }, []);
 
   // Confetti celebration launcher
@@ -427,42 +435,24 @@ export default function App() {
       console.warn('Formspree submission error:', formspreeErr);
     }
 
-    // 2. Also save to live guestbook wall and internal server
-    const localNewWish: WishItem = {
-      id: now.toString(),
-      name: finalName,
-      attendance: finalAttendance,
-      guests: finalGuests,
-      message: finalWish,
-      createdAt: now,
-      timestamp: isoString,
-      time: 'Just now'
-    };
-
-    const updatedWishes = [localNewWish, ...wishes];
-    setWishes(updatedWishes);
+    // 2. Save directly to Firebase Firestore
     try {
-      localStorage.setItem('zaire_birthday_wishes', JSON.stringify(updatedWishes));
-    } catch (err) {
-      console.warn(err);
-    }
-
-    try {
-      await fetch('/api/wishes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: finalName,
-          attendance: finalAttendance,
-          guests: finalGuests,
-          message: finalWish,
-          createdAt: now,
-          timestamp: isoString
-        })
+      await addDoc(collection(db, 'wishes'), {
+        name: finalName,
+        attendance: finalAttendance,
+        guests: finalGuests,
+        message: finalWish,
+        createdAt: serverTimestamp()
       });
-    } catch (error) {
-      console.warn("Backend wish save fallback:", error);
+    } catch (firestoreErr) {
+      console.error('Error adding wish to Firestore:', firestoreErr);
     }
+
+    // Clear input fields upon successful write
+    setGuestName('');
+    setMessage('');
+    setAttendance('yes');
+    setGuestCount(1);
 
     setSubmittedGuestInfo({
       name: finalName,

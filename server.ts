@@ -22,8 +22,10 @@ const PHOTO_FILE = path.join(DATA_DIR, 'zaire_photo.txt');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+
+// Ensure wishes data file exists with empty array by default
 if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([]));
+  fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
 }
 
 // GET all wishes
@@ -48,14 +50,18 @@ app.post('/api/wishes', (req, res) => {
 
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
     const wishes = JSON.parse(raw || '[]');
+    const now = Date.now();
+    const isoString = new Date(now).toISOString();
 
     const newWish = {
-      id: Date.now().toString(),
+      id: now.toString(),
       name: name.trim(),
       attendance: attendance === 'no' ? 'no' : 'yes',
       guests: attendance === 'yes' ? (Number(guests) || 1) : 0,
       message: (message || '').trim(),
-      time: new Date().toLocaleDateString('en-US', {
+      createdAt: now,
+      timestamp: isoString,
+      time: new Date(now).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         hour: 'numeric',

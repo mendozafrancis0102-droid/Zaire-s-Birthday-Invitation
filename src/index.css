@@ -73,3 +73,98 @@
   background-position: 0 0, 16px 16px;
   background-opacity: 0.15;
 }
+
+/* Rainbow Text with Crisp White Outline */
+.rainbow-text {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 20%, #eab308 40%, #10b981 60%, #06b6d4 80%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 3px #ffffff;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+}
+
+.rainbow-text-bold {
+  background: linear-gradient(90deg, #ff1a1a, #ff7e00, #ffc700, #10b981, #06b6d4, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 4px #ffffff;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+}
+
+.text-white-outline-heavy {
+  paint-order: stroke fill;
+  -webkit-text-stroke: 4px #ffffff;
+  text-shadow: 
+    -2px -2px 0 #ffffff,
+     2px -2px 0 #ffffff,
+    -2px  2px 0 #ffffff,
+     2px  2px 0 #ffffff,
+     0px  4px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Iconic Bubbly 3D CoComelon Logo Font Styling */
+.font-cocomelon {
+  font-family: 'Fredoka One', 'Fredoka', 'Quicksand', ui-rounded, cursive, system-ui, sans-serif;
+  font-weight: 900;
+}
+
+.cocomelon-letter-wrap {
+  display: inline-block;
+  position: relative;
+  user-select: none;
+  font-family: 'Fredoka One', 'Fredoka', ui-rounded, cursive, sans-serif;
+  font-weight: 900;
+  line-height: 1.15;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.38));
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cocomelon-letter-wrap:hover {
+  transform: translateY(-4px) scale(1.12) rotate(2deg) !important;
+}
+
+.cocomelon-letter-stroke {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  color: #ffffff;
+  -webkit-text-stroke: 6px #ffffff;
+  paint-order: stroke fill;
+  text-shadow: 
+    -3px -3px 0 #ffffff,
+     3px -3px 0 #ffffff,
+    -3px  3px 0 #ffffff,
+     3px  3px 0 #ffffff,
+    -4px  0px 0 #ffffff,
+     4px  0px 0 #ffffff,
+     0px -4px 0 #ffffff,
+     0px  4px 0 #ffffff,
+     0px  5px 0px rgba(0, 0, 0, 0.22);
+}
+
+@media (min-width: 640px) {
+  .cocomelon-letter-stroke {
+    -webkit-text-stroke: 8px #ffffff;
+    text-shadow: 
+      -4px -4px 0 #ffffff,
+       4px -4px 0 #ffffff,
+      -4px  4px 0 #ffffff,
+       4px  4px 0 #ffffff,
+      -5px  0px 0 #ffffff,
+       5px  0px 0 #ffffff,
+       0px -5px 0 #ffffff,
+       0px  5px 0 #ffffff,
+       0px  7px 0px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.cocomelon-letter-fill {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
